@@ -1,0 +1,5 @@
+{
+    "name" : "Dual Analysis",
+    "version": "1",
+    "dependencies" : ["Points"]
+}
