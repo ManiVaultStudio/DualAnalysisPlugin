@@ -1,24 +1,20 @@
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.17.0)
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27.0")
+    cmake_policy(SET CMP0144 NEW)    # Remove once we set min cmake version accordingly
+endif()
 
 set(PROJECT "DualAnalysisPlugin")
 PROJECT(${PROJECT})
 
-include(FetchContent)
-FetchContent_Declare(cmakesupport
-	GIT_REPOSITORY https://github.com/ManiVaultStudio/github-actions
-	GIT_TAG main
-	GIT_SHALLOW TRUE
-	SOURCE_SUBDIR CMakeSupport
-)
-FetchContent_MakeAvailable(cmakesupport)
 
 # -----------------------------------------------------------------------------
 # User options
 # -----------------------------------------------------------------------------
-option(USE_ARTIFACTORY_LIBS "Use the prebuilt libraries from artifactory" ON)
-option(ENABLE_AVX "Enable AVX support" OFF)
+option(MV_SNE_USE_ARTIFACTORY_LIBS "Use the prebuilt libraries from artifactory" ON)
+option(MV_SNE_USE_AVX "Enable AVX support" OFF)
 option(MV_UNITY_BUILD "Combine target source files into batches for faster compilation" OFF)
-set(OPTIMIZATION_LEVEL "2" CACHE STRING "Optimization level for all targets in release builds, e.g. 0, 1, 2")
+set(MV_SNE_OPTIMIZATION_LEVEL "2" CACHE STRING "Optimization level for all targets in release builds, e.g. 0, 1, 2")
 
 # -----------------------------------------------------------------------------
 # CMake options
@@ -33,10 +29,9 @@ set(CMAKE_AUTOUIC ON)
 # macros for linking both prebuilt artifactory libraries and locally built ones
 include(CMakeLinkUtilities)
 
-# Test hardware avx capabilities
-include(CMakeSetOptimizationAndAVX)
 
-include(InstallArtifactoryPackage)
+# set optimization in release mode
+include(CMakeSetOptimizationLevel)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP  /permissive- /Zc:__cplusplus")
@@ -49,20 +44,22 @@ endif(MSVC)
 # -----------------------------------------------------------------------------
 
 set(LIBRARY_INSTALL_DIR ${PROJECT_BINARY_DIR})
-message(status "FetchContent: ${cmakesupport_SOURCE_DIR} ${cmakesupport_BINARY_DIR}")
-include("${cmakesupport_SOURCE_DIR}/CMakeSupport/InstallArtifactoryPackage.cmake")
 if (USE_ARTIFACTORY_LIBS AND NOT DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED) 
     message(STATUS "Installing artifactory packages to: ${LIBRARY_INSTALL_DIR}")
 
-    set(HDILib_VERSION 1.2.7)
+    set(HDILib_VERSION 1.2.9)
     set(flann_VERSION 1.9.2)
-    set(lz4_VERSION 1.9.3)
+    set(lz4_VERSION 1.10.0)
 
     # Both HDILib and flann are available prebuilt in the lkeb-artifactory as combined Debug/Release packages
     # lz4 is also available in the lkb-artifactory in separate Debug and |Release packages
     install_artifactory_package(HDILib ${HDILib_VERSION} biovault TRUE) 
     install_artifactory_package(flann ${flann_VERSION} lkeb TRUE)
-    install_artifactory_package(lz4 ${lz4_VERSION} _ FALSE)
+    install_artifactory_package(lz4 ${lz4_VERSION} lkeb TRUE)
+	
+	set(lz4_ROOT "${LIBRARY_INSTALL_DIR}/lz4/lib/cmake/lz4" CACHE PATH "Location of lz4 cmake file")
+    set(flann_ROOT "${LIBRARY_INSTALL_DIR}/flann/lib/cmake/flann" CACHE PATH "Location of flann cmake file")
+    set(HDILIB_ROOT "${LIBRARY_INSTALL_DIR}/HDILib/lib/cmake/HDILib" CACHE PATH "Location of HDILib cmake file")
 
     message(STATUS "module path ${CMAKE_MODULE_PATH}")
     message(STATUS "Call find_package HDILib search ${CMAKE_SOURCE_DIR}/HDILib/lib/cmake/HDILib")
@@ -74,21 +71,50 @@ endif()
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
+find_package(lz4 CONFIG)
+if(NOT ${lz4_FOUND})
+    find_package(PkgConfig REQUIRED)
 
-if(USE_ARTIFACTORY_LIBS AND DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED)
-    # If the HDILib_VERSION is not a x.y.z version number 
-    # omit the version argument from find package
-    find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata PATHS "${LIBRARY_INSTALL_DIR}/HDILib" CONFIG REQUIRED)
-else()
-    if(NOT HDILIB_ROOT)
-        message(FATAL_ERROR "Define HDILIB_ROOT")
-    endif()
-
-    find_package(flann CONFIG REQUIRED)
-    find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata PATHS "${HDILIB_ROOT}" CONFIG REQUIRED)
-
-    message(STATUS "HDILib found at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")    
+    pkg_check_modules(lz4 REQUIRED IMPORTED_TARGET liblz4)
+    set(LZ4_TARGET PkgConfig::lz4)
 endif()
+
+if(NOT ${lz4_FOUND})
+    message (FATAL_ERROR "lz4 NOT found")
+endif()
+message (STATUS "Found lz4 version ${lz4_VERSION}")
+
+find_package(flann CONFIG)
+if(NOT ${flann_FOUND})
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(flann REQUIRED flann)
+    set(FLANN_TARGET flann_cpp)
+    set(flann_INCLUDE_DIR "${flann_INCLUDE_DIRS}/flann")
+endif()
+
+if(NOT ${flann_FOUND})
+    message (FATAL_ERROR "flann NOT found")
+endif()
+message (STATUS "Found flann version ${flann_VERSION}")
+
+if(NOT HDILIB_ROOT)
+    message(FATAL_ERROR "Define HDILIB_ROOT")
+endif()
+
+find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata CONFIG REQUIRED PATHS ${HDILIB_ROOT})
+
+if(${HDILib_FOUND})
+    message(STATUS "HDILib found at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
+endif()
+
+find_package(OpenGL REQUIRED)
+find_package(OpenMP)
+
+if(OpenMP_CXX_FOUND)
+    message(STATUS "Found OpenMP")
+endif()
+
 
 find_package(Qt6 6.3.1 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 
@@ -198,14 +224,14 @@ target_include_directories(${PROJECT} PRIVATE "src/Common")
 target_include_directories(${PROJECT} PRIVATE "third_party/json")
 
 set_HDILib_project_includes(${PROJECT})
-set_flann_project_includes(${PROJECT})
-set_lz4_project_includes(${PROJECT})
 
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
 # Request C++17
-target_compile_features(${PROJECT} PRIVATE cxx_std_17)
+set_target_properties(${PROJECT} PROPERTIES CXX_STANDARD 17)
+
+target_compile_definitions(${PROJECT} PRIVATE QT_MESSAGELOGCONTEXT)
 
 # Enable unity build
 if(MV_UNITY_BUILD)
@@ -235,8 +261,8 @@ set_flann_project_link_libraries(${PROJECT})
 set_HDILib_project_link_libraries(${PROJECT})
 set_lz4_project_link_libraries(${PROJECT})
 
-set_optimization_level(${PROJECT} ${OPTIMIZATION_LEVEL})
-check_and_set_AVX(${PROJECT} ${ENABLE_AVX})
+set_optimization_level(${PROJECT} ${MV_SNE_OPTIMIZATION_LEVEL})
+mv_check_and_set_AVX(${PROJECT} ${MV_SNE_USE_AVX})
 
 silence_opengl_deprecation(${PROJECT})
 
@@ -255,6 +281,11 @@ add_custom_command(TARGET ${PROJECT} POST_BUILD
         --install ${PROJECT_BINARY_DIR}
         --config $<CONFIGURATION>
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+)
+
+set_target_properties(${PROJECT}
+    PROPERTIES
+    FOLDER AnalysisPlugins
 )
 
 # -----------------------------------------------------------------------------

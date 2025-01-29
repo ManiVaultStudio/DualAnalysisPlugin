@@ -1,0 +1,11 @@
+build/
+flann
+HDILibflann.tgz
+aql_out.txt
+HDILib.tgz
+HDILib/
+flann.tgz
+lz4.tgz
+lz4_Debug.tgz
+lz4_Release.tgz
+*.bak
