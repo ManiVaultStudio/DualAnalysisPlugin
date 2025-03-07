@@ -1896,14 +1896,14 @@ QVariantMap DualAnalysisPlugin::toVariantMap() const
 // Plugin Factory 
 // =============================================================================
 
-QIcon DualAnalysisPluginFactory::getIcon(const QColor& color /*= Qt::black*/) const
-{
-    return createPluginIcon("DUAL", color);
-}
-
 AnalysisPlugin* DualAnalysisPluginFactory::produce()
 {
     return new DualAnalysisPlugin(this);
+}
+
+DualAnalysisPluginFactory::DualAnalysisPluginFactory()
+{
+    setIcon(StyledIcon(createPluginIcon("DUAL")));
 }
 
 PluginTriggerActions DualAnalysisPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
@@ -1916,7 +1916,7 @@ PluginTriggerActions DualAnalysisPluginFactory::getPluginTriggerActions(const mv
 
     if (PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
         if (datasets.count() >= 1) {
-            auto pluginTriggerAction = new PluginTriggerAction(const_cast<DualAnalysisPluginFactory*>(this), this, "Dual", "Perform dual analysis on selected datasets", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+            auto pluginTriggerAction = new PluginTriggerAction(const_cast<DualAnalysisPluginFactory*>(this), this, "Dual", "Perform dual analysis on selected datasets", icon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
                 for (const auto& dataset : datasets)
                     getPluginInstance(dataset);
             });
@@ -1925,7 +1925,7 @@ PluginTriggerActions DualAnalysisPluginFactory::getPluginTriggerActions(const mv
         }
 
         if (datasets.count() >= 2) {
-            auto pluginTriggerAction = new PluginTriggerAction(const_cast<DualAnalysisPluginFactory*>(this), this, "Group/Dual", "Group datasets and perform dual analysis on it", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+            auto pluginTriggerAction = new PluginTriggerAction(const_cast<DualAnalysisPluginFactory*>(this), this, "Group/Dual", "Group datasets and perform dual analysis on it", icon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
                 getPluginInstance(mv::data().groupDatasets(datasets));
             });
 
