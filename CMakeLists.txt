@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.0)
+cmake_minimum_required(VERSION 3.22)
 
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27.0")
     cmake_policy(SET CMP0144 NEW)    # Remove once we set min cmake version accordingly
@@ -11,10 +11,10 @@ PROJECT(${PROJECT})
 # -----------------------------------------------------------------------------
 # User options
 # -----------------------------------------------------------------------------
-option(MV_SNE_USE_ARTIFACTORY_LIBS "Use the prebuilt libraries from artifactory" ON)
-option(MV_SNE_USE_AVX "Enable AVX support" OFF)
+option(MV_DUAL_USE_ARTIFACTORY_LIBS "Use the prebuilt libraries from artifactory" ON)
+option(MV_DUAL_USE_AVX "Enable AVX support" OFF)
 option(MV_UNITY_BUILD "Combine target source files into batches for faster compilation" OFF)
-set(MV_SNE_OPTIMIZATION_LEVEL "2" CACHE STRING "Optimization level for all targets in release builds, e.g. 0, 1, 2")
+set(MV_DUAL_OPTIMIZATION_LEVEL "2" CACHE STRING "Optimization level for all targets in release builds, e.g. 0, 1, 2")
 
 # -----------------------------------------------------------------------------
 # CMake options
@@ -36,6 +36,7 @@ include(CMakeSetOptimizationLevel)
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP  /permissive- /Zc:__cplusplus")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
@@ -43,34 +44,50 @@ endif(MSVC)
 # Install dependency libraries
 # -----------------------------------------------------------------------------
 
-set(LIBRARY_INSTALL_DIR ${PROJECT_BINARY_DIR})
-if (USE_ARTIFACTORY_LIBS AND NOT DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED) 
-    message(STATUS "Installing artifactory packages to: ${LIBRARY_INSTALL_DIR}")
+if (MV_DUAL_USE_ARTIFACTORY_LIBS) 
+    set(LIBRARY_INSTALL_DIR ${PROJECT_BINARY_DIR})
+    
+    if(NOT DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED)
+        message(STATUS "Installing artifactory packages to: ${LIBRARY_INSTALL_DIR}")
 
-    set(HDILib_VERSION 1.2.9)
-    set(flann_VERSION 1.9.2)
-    set(lz4_VERSION 1.10.0)
+        set(HDILib_VERSION 1.2.10)
+        set(flann_VERSION 1.9.2)
+        set(lz4_VERSION 1.10.0)
 
-    # Both HDILib and flann are available prebuilt in the lkeb-artifactory as combined Debug/Release packages
-    # lz4 is also available in the lkb-artifactory in separate Debug and |Release packages
-    install_artifactory_package(HDILib ${HDILib_VERSION} biovault TRUE) 
-    install_artifactory_package(flann ${flann_VERSION} lkeb TRUE)
-    install_artifactory_package(lz4 ${lz4_VERSION} lkeb TRUE)
-	
-	set(lz4_ROOT "${LIBRARY_INSTALL_DIR}/lz4/lib/cmake/lz4" CACHE PATH "Location of lz4 cmake file")
-    set(flann_ROOT "${LIBRARY_INSTALL_DIR}/flann/lib/cmake/flann" CACHE PATH "Location of flann cmake file")
+        include(FetchContent)
+        FetchContent_Declare(cmakesupport
+            GIT_REPOSITORY https://github.com/ManiVaultStudio/github-actions
+            GIT_TAG main
+            GIT_SHALLOW TRUE
+            SOURCE_SUBDIR CMakeSupport
+        )
+        FetchContent_MakeAvailable(cmakesupport)
+
+        message(STATUS "FetchContent: ${cmakesupport_SOURCE_DIR} ${cmakesupport_BINARY_DIR}")
+        include("${cmakesupport_SOURCE_DIR}/CMakeSupport/InstallArtifactoryPackage.cmake")
+
+        install_artifactory_package(HDILib ${HDILib_VERSION} biovault TRUE) 
+        install_artifactory_package(flann ${flann_VERSION} lkeb TRUE)
+        install_artifactory_package(lz4 ${lz4_VERSION} lkeb TRUE)
+
+    endif()
+
+    set(lz4_ROOT "${LIBRARY_INSTALL_DIR}/lz4/lib/cmake" CACHE PATH "Location of lz4 cmake file")
+    set(flann_ROOT "${LIBRARY_INSTALL_DIR}/flann/lib/cmake/" CACHE PATH "Location of flann cmake file")
     set(HDILIB_ROOT "${LIBRARY_INSTALL_DIR}/HDILib/lib/cmake/HDILib" CACHE PATH "Location of HDILib cmake file")
-
-    message(STATUS "module path ${CMAKE_MODULE_PATH}")
-    message(STATUS "Call find_package HDILib search ${CMAKE_SOURCE_DIR}/HDILib/lib/cmake/HDILib")
-    message(STATUS "Run find_package HDILib")
 
     set(DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED TRUE CACHE BOOL "Use the prebuilt libraries from artifactory" FORCE)
 endif()
 
+
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
+
+find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+
+find_package(ManiVault COMPONENTS Core PointData ImageData CONFIG QUIET)
+
 find_package(lz4 CONFIG)
 if(NOT ${lz4_FOUND})
     find_package(PkgConfig REQUIRED)
@@ -98,15 +115,37 @@ if(NOT ${flann_FOUND})
 endif()
 message (STATUS "Found flann version ${flann_VERSION}")
 
-if(NOT HDILIB_ROOT)
-    message(FATAL_ERROR "Define HDILIB_ROOT")
+# if this project and the HDILib are build as subproject together, we don't need to look for the library
+if(TARGET hdidimensionalityreduction AND TARGET hdiutils AND TARGET hdidata)
+    if(NOT HDILib_LINK_LIBS)
+        set(HDILib_LINK_LIBS hdidimensionalityreduction hdiutils hdidata)
+    endif()
+    
+    if(NOT HDILib_INCLUDE_DIR AND HDILib_SOURCE_DIR)
+        set(HDILib_INCLUDE_DIR ${HDILib_SOURCE_DIR})
+    endif()
+else()
+    if(NOT HDILIB_ROOT)
+        message(FATAL_ERROR "Define HDILIB_ROOT")
+    endif()
+
+    find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata CONFIG REQUIRED PATHS ${HDILIB_ROOT})
 endif()
 
-find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata CONFIG REQUIRED PATHS ${HDILIB_ROOT})
-
-if(${HDILib_FOUND})
-    message(STATUS "HDILib found at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
+if(NOT ${HDILib_FOUND})
+    message (FATAL_ERROR "HDILib NOT found")
 endif()
+message (STATUS "Found HDILib at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
+
+# if(NOT HDILIB_ROOT)
+    # message(FATAL_ERROR "Define HDILIB_ROOT")
+# endif()
+
+# find_package(HDILib COMPONENTS hdidimensionalityreduction hdiutils hdidata CONFIG REQUIRED PATHS ${HDILIB_ROOT})
+
+# if(${HDILib_FOUND})
+    # message(STATUS "HDILib found at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
+# endif()
 
 find_package(OpenGL REQUIRED)
 find_package(OpenMP)
@@ -115,10 +154,6 @@ if(OpenMP_CXX_FOUND)
     message(STATUS "Found OpenMP")
 endif()
 
-
-find_package(Qt6 6.3.1 COMPONENTS Widgets WebEngineWidgets REQUIRED)
-
-find_package(ManiVault COMPONENTS Core PointData ImageData CONFIG)
 
 find_package(OpenGL REQUIRED)
 find_package(OpenMP)
@@ -229,7 +264,8 @@ set_HDILib_project_includes(${PROJECT})
 # Target properties
 # -----------------------------------------------------------------------------
 # Request C++17
-set_target_properties(${PROJECT} PROPERTIES CXX_STANDARD 17)
+# set_target_properties(${PROJECT} PROPERTIES CXX_STANDARD 17)
+target_compile_features(${PROJECT} PRIVATE cxx_std_20)
 
 target_compile_definitions(${PROJECT} PRIVATE QT_MESSAGELOGCONTEXT)
 
@@ -261,8 +297,8 @@ set_flann_project_link_libraries(${PROJECT})
 set_HDILib_project_link_libraries(${PROJECT})
 set_lz4_project_link_libraries(${PROJECT})
 
-set_optimization_level(${PROJECT} ${MV_SNE_OPTIMIZATION_LEVEL})
-mv_check_and_set_AVX(${PROJECT} ${MV_SNE_USE_AVX})
+set_optimization_level(${PROJECT} ${MV_DUAL_OPTIMIZATION_LEVEL})
+mv_check_and_set_AVX(${PROJECT} ${MV_DUAL_USE_AVX})
 
 silence_opengl_deprecation(${PROJECT})
 
@@ -293,6 +329,10 @@ set_target_properties(${PROJECT}
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
-    set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug,${ManiVault_INSTALL_DIR}/release>)
-    set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug/ManiVault\ Studio.exe,${ManiVault_INSTALL_DIR}/release/ManiVault\ Studio.exe>)
+    # set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug,${ManiVault_INSTALL_DIR}/release>)
+    # set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug/ManiVault\ Studio.exe,${ManiVault_INSTALL_DIR}/release/ManiVault\ Studio.exe>)
+	
+	set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/Debug,$<IF:$<CONFIG:RELWITHDEBINFO>,${ManiVault_INSTALL_DIR}/RelWithDebInfo,${ManiVault_INSTALL_DIR}/Release>>)
+     set_property(TARGET ${PROJECT} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${ManiVault_INSTALL_DIR}/Debug/ManiVault Studio.exe",$<IF:$<CONFIG:RELWITHDEBINFO>,"${ManiVault_INSTALL_DIR}/RelWithDebInfo/ManiVault Studio.exe","${ManiVault_INSTALL_DIR}/Release/ManiVault Studio.exe">>)
+	 
 endif()
