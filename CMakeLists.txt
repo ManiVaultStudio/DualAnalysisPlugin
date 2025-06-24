@@ -7,7 +7,6 @@ endif()
 set(PROJECT "DualAnalysisPlugin")
 PROJECT(${PROJECT})
 
-
 # -----------------------------------------------------------------------------
 # User options
 # -----------------------------------------------------------------------------
@@ -146,14 +145,6 @@ message (STATUS "Found HDILib at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
 # if(${HDILib_FOUND})
     # message(STATUS "HDILib found at ${HDILIB_ROOT} with ${HDILib_LINK_LIBS}")
 # endif()
-
-find_package(OpenGL REQUIRED)
-find_package(OpenMP)
-
-if(OpenMP_CXX_FOUND)
-    message(STATUS "Found OpenMP")
-endif()
-
 
 find_package(OpenGL REQUIRED)
 find_package(OpenMP)
