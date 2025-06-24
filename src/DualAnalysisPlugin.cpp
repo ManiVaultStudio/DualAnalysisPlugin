@@ -94,9 +94,10 @@ DualAnalysisPlugin::~DualAnalysisPlugin()
 void DualAnalysisPlugin::init()
 {
     _datasetB = getInputDataset<Points>();// assume the input dataset is a cell by gene matrix
-
+    qDebug() << "input dataset B: " << _datasetB->getGuiName();
 	if (!outputDataInit())
 	{
+        qDebug() << "output data initialization failed";
 		transposeData();
 
         initializeEmbeddingA();
@@ -112,13 +113,16 @@ void DualAnalysisPlugin::init()
 void DualAnalysisPlugin::transposeData()
 {
     const auto inputPoints = getInputDataset<Points>();
+    qDebug() << "input dataset: " << inputPoints->getGuiName();
 
     // Retrieve the number of points and dimensions
     const auto numPoints = inputPoints->getNumPoints();
     const auto numDimensions = inputPoints->getNumDimensions();
+    qDebug() << "numPoints: " << numPoints << " numDimensions: " << numDimensions;
 
     // Create a vector to store the transposed data
     QVector<float> transposedData(numPoints * numDimensions);
+    qDebug() << "transposedData vector initialized";
 
     // Transposing the data
 #pragma omp parallel for
@@ -129,7 +133,15 @@ void DualAnalysisPlugin::transposeData()
             // Correct indexing for the transposed data
             transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
         }
+
+        // Progress reporting
+        if (i % 100 == 0)
+        {
+			qDebug() << "Transposing data: " << i << " / " << numPoints;
+        }
+
     }
+    qDebug() << "transposed vector generated";
 
     _datasetA = mv::data().createDataset<Points>("Points", "Transposed Data");
 
