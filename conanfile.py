@@ -117,10 +117,10 @@ class DualAnalysisPluginConan(ConanFile):
         print("ManiVault_DIR: ", manivault_dir)
         tc.variables["ManiVault_DIR"] = manivault_dir
 
-        # if os_info.is_macos:
-            # proc = subprocess.run("brew --prefix libomp", shell=True, capture_output=True)
-            # prefix_path = f"{proc.stdout.decode('UTF-8').strip()}"
-            # tc.variables["OpenMP_ROOT"] = prefix_path
+        if os_info.is_macos:
+            proc = subprocess.run("brew --prefix libomp", shell=True, capture_output=True)
+            prefix_path = f"{proc.stdout.decode('UTF-8').strip()}"
+            tc.variables["OpenMP_ROOT"] = prefix_path
             
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
