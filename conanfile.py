@@ -21,7 +21,7 @@ class DualAnalysisPluginConan(ConanFile):
     name = "DualAnalysisPlugin"
     description = """Analysis for generating cell and gene embeddings"""
     topics = ("manivault", "plugin")
-    url = "https://github.com/ManiVaultStudio/DualViewPlugin"
+    url = "https://github.com/ManiVaultStudio/DualAnalysisPlugin"
     author = "B. van Lew b.van_lew@lumc.nl"  # conan recipe author
     license = "LGPL 3.0"
 
@@ -130,7 +130,7 @@ class DualAnalysisPluginConan(ConanFile):
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="hdps/DualViewPlugin")
+        cmake.configure(build_script_folder="hdps/DualAnalysisPlugin")
         cmake.verbose = True
         return cmake
 
