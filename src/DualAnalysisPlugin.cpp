@@ -120,6 +120,11 @@ void DualAnalysisPlugin::transposeData()
     const int64_t numDimensions = inputPoints->getNumDimensions();
     qDebug() << "numPoints: " << numPoints << " numDimensions: " << numDimensions;
 
+    if (numPoints*numDimensions > std::numeric_limits<int64_t>::max())
+    {
+        throw std::overflow_error("ERROR: numPoints * numDimensions overflows int64_t");
+    }
+
     // Create a vector to store the transposed data
     QVector<biovault::bfloat16_t> transposedData(numPoints * numDimensions);
     qDebug() << "transposedData vector initialized";
@@ -132,7 +137,9 @@ void DualAnalysisPlugin::transposeData()
         {
             // Correct indexing for the transposed data
             //transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
-            transposedData[j * numPoints + i] = static_cast<biovault::bfloat16_t>(inputPoints->getValueAt(i * numDimensions + j));
+            
+            const size_t idxInput = static_cast<size_t>(i) * static_cast<size_t>(numDimensions)+ static_cast<size_t>(j);
+            transposedData[j * numPoints + i] = static_cast<biovault::bfloat16_t>(inputPoints->getValueAt(idxInput));
         }
 
         // Progress reporting
