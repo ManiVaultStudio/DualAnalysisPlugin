@@ -126,20 +126,21 @@ void DualAnalysisPlugin::transposeData()
     }
 
     // Create a vector to store the transposed data
-    QVector<biovault::bfloat16_t> transposedData(numPoints * numDimensions);
+    QVector<float> transposedData(numPoints * numDimensions);//float
+    //QVector<biovault::bfloat16_t> transposedData(numPoints * numDimensions);//bfloat
+
     qDebug() << "transposedData vector initialized";
 
     // Transposing the data
-#pragma omp parallel for // size_t does not work with openmp
+#pragma omp parallel for
     for (int64_t i = 0; i < numPoints; ++i)
     {
         for (int64_t j = 0; j < numDimensions; ++j)
         {
-            // Correct indexing for the transposed data
-            //transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
-            
             const size_t idxInput = static_cast<size_t>(i) * static_cast<size_t>(numDimensions)+ static_cast<size_t>(j);
-            transposedData[j * numPoints + i] = static_cast<biovault::bfloat16_t>(inputPoints->getValueAt(idxInput));
+
+            transposedData[j * numPoints + i] = inputPoints->getValueAt(idxInput);//float         
+            //transposedData[j * numPoints + i] = static_cast<biovault::bfloat16_t>(inputPoints->getValueAt(idxInput));//bfloat
         }
 
         // Progress reporting
