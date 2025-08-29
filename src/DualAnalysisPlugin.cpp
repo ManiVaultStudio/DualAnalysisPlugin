@@ -121,7 +121,7 @@ void DualAnalysisPlugin::transposeData()
     qDebug() << "numPoints: " << numPoints << " numDimensions: " << numDimensions;
 
     // Create a vector to store the transposed data
-    QVector<float> transposedData(numPoints * numDimensions);
+    QVector<biovault::bfloat16_t> transposedData(numPoints * numDimensions);
     qDebug() << "transposedData vector initialized";
 
     // Transposing the data
@@ -131,7 +131,8 @@ void DualAnalysisPlugin::transposeData()
         for (int j = 0; j < numDimensions; ++j)
         {
             // Correct indexing for the transposed data
-            transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
+            //transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
+            transposedData[j * numPoints + i] = static_cast<biovault::bfloat16_t>(inputPoints->getValueAt(i * numDimensions + j));
         }
 
         // Progress reporting
