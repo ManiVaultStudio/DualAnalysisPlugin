@@ -116,8 +116,8 @@ void DualAnalysisPlugin::transposeData()
     qDebug() << "input dataset: " << inputPoints->getGuiName();
 
     // Retrieve the number of points and dimensions
-    size_t numPoints = inputPoints->getNumPoints();
-    size_t numDimensions = inputPoints->getNumDimensions();
+    const int64_t numPoints = inputPoints->getNumPoints();
+    const int64_t numDimensions = inputPoints->getNumDimensions();
     qDebug() << "numPoints: " << numPoints << " numDimensions: " << numDimensions;
 
     // Create a vector to store the transposed data
@@ -125,10 +125,10 @@ void DualAnalysisPlugin::transposeData()
     qDebug() << "transposedData vector initialized";
 
     // Transposing the data
-//#pragma omp parallel for // size_t does not work with openmp
-    for (size_t i = 0; i < numPoints; ++i)
+#pragma omp parallel for // size_t does not work with openmp
+    for (int64_t i = 0; i < numPoints; ++i)
     {
-        for (size_t j = 0; j < numDimensions; ++j)
+        for (int64_t j = 0; j < numDimensions; ++j)
         {
             // Correct indexing for the transposed data
             //transposedData[j * numPoints + i] = inputPoints->getValueAt(i * numDimensions + j);
