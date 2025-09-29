@@ -334,7 +334,7 @@ void DualAnalysisPlugin::setup2DTsneForDataset(mv::Dataset<Points>& inputDataset
     dataPreparationTask.setParentTask(&embeddingDataset->getTask());
 
     embeddingDataset->addAction(tsneSettingsAction->getGeneralTsneSettingsAction());
-    //embeddingDataset->addAction(tsneSettingsAction->getInitalEmbeddingSettingsAction());
+    embeddingDataset->addAction(tsneSettingsAction->getInitalEmbeddingSettingsAction());
     //embeddingDataset->addAction(tsneSettingsAction->getGradientDescentSettingsAction());
     //embeddingDataset->addAction(tsneSettingsAction->getKnnSettingsAction());
     //auto dimensionsGroupAction = new GroupAction(this, "Dimensions", true);
