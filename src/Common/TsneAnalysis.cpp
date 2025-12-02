@@ -1,6 +1,6 @@
 #include "TsneAnalysis.h"
 
-#include "hdi/utils/glad/glad.h"
+//#include "hdi/utils/glad/glad.h" // remove for error in macos build
 #include "OffscreenBuffer.h"
 
 #include <cassert>
