@@ -407,7 +407,7 @@ void DualAnalysisPlugin::setup2DTsneForDataset(mv::Dataset<Points>& inputDataset
         // Update the output points dataset with new data from the TSNE analysis
         embeddingDataset->setData(tsneData.getData().data(), tsneData.getNumPoints(), tsneSettingsAction->getGeneralTsneSettingsAction().getNumDimensionOutputAction().getCurrentText().toInt());
 
-        tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
+        tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
 
         // Notify others that the embedding data changed
         events().notifyDatasetDataChanged(embeddingDataset);
@@ -463,7 +463,7 @@ void DualAnalysisPlugin::startComputation(mv::Dataset<Points>& inputDataset, mv:
 
     const auto numEnabledDimensions = count_if(enabledDimensions.begin(), enabledDimensions.end(), [](bool b) { return b; });
 
-    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().reset();
+    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().reset();
 
     const auto numPoints = inputDataset->isFull() ? inputDataset->getNumPoints() : inputDataset->indices.size();
     data.resize(numPoints * numEnabledDimensions);
@@ -501,7 +501,7 @@ void DualAnalysisPlugin::startComputation(mv::Dataset<Points>& inputDataset, mv:
 
     const auto numEnabledDimensions = count_if(enabledDimensions.begin(), enabledDimensions.end(), [](bool b) { return b; });
 
-    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().reset();
+    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().reset();
 
     const auto numPoints = inputDataset->isFull() ? inputDataset->getNumPoints() : inputDataset->indices.size();
     data.resize(numPoints * numEnabledDimensions);
@@ -568,7 +568,7 @@ void DualAnalysisPlugin::continueComputation(mv::Dataset<Points>& embeddingDatas
         currentEmbeddingPositions.resize(2ull * currentEmbedding->getNumPoints()); // FIXME: 2ull????
         currentEmbedding->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(currentEmbeddingPositions, { 0, 1 });
 
-        tsneAnalysis.startComputation(tsneSettingsAction->getTsneParameters(), std::move(probDistMatrix), currentEmbedding->getNumPoints(), &currentEmbeddingPositions, tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().getValue());
+        tsneAnalysis.startComputation(tsneSettingsAction->getTsneParameters(), std::move(probDistMatrix), currentEmbedding->getNumPoints(), &currentEmbeddingPositions, tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().getValue());
     }
     else
     {
@@ -621,7 +621,7 @@ void DualAnalysisPlugin::compute1DTsne(mv::Dataset<Points>& inputDataset, mv::Da
         // Update the output points dataset with new data from the TSNE analysis
         embeddingDataset->setData(tsneData.getData().data(), tsneData.getNumPoints(), tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumDimensionOutputAction().getCurrentText().toInt());
 
-        tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
+        tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
 
         // Notify others that the embedding data changed
         events().notifyDatasetDataChanged(embeddingDataset);
@@ -668,7 +668,7 @@ void DualAnalysisPlugin::compute1DTsne(mv::Dataset<Points>& inputDataset, mv::Da
         // Update the output points dataset with new data from the TSNE analysis
         embeddingDataset->setData(tsneData.getData().data(), tsneData.getNumPoints(), tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumDimensionOutputAction().getCurrentText().toInt());
 
-        tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
+        tsne1DSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
 
         // Notify others that the embedding data changed
         events().notifyDatasetDataChanged(embeddingDataset);
@@ -785,8 +785,13 @@ void DualAnalysisPlugin::setupHSNEForDataset(mv::Dataset<Points>& inputDataset, 
         _hsneSettingsAction->getGradientDescentSettingsAction().setReadOnly(false);
         _hsneSettingsAction->getKnnSettingsAction().setReadOnly(false);
 
-        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Recompute");
-        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Recomputing does not change the selection mapping.\n If the data size changed, prefer creating a new HSNE analysis.");
+        /*_hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Recompute");
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Recomputing does not change the selection mapping.\n If the data size changed, prefer creating a new HSNE analysis.");*/
+
+        // TODO: fix recompute, see issues 140 and 152 on github.com/ManiVaultStudio/t-SNE-Analysis
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setEnabled(false);
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Already computed"); // after fix: "Recompute"
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Compute another HSNE embedding via.\nRight-click the source data -> Analyze -> HSNE");
 
         computeTopLevelEmbedding(inputDataset, embeddingDataset, tsneAnalysis);
         });
@@ -832,7 +837,7 @@ void DualAnalysisPlugin::setupHSNEForDataset(mv::Dataset<Points>& inputDataset, 
     connect(&tsneAnalysis, &TsneAnalysis::embeddingUpdate, this, [this, &embeddingDataset, &tsneAnalysis](const TsneData& tsneData) {
         embeddingDataset->setData(tsneData.getData().data(), tsneData.getNumPoints(), 2);
 
-        _hsneSettingsAction->getTopLevelScaleAction().getNumberOfComputatedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
+        _hsneSettingsAction->getTopLevelScaleAction().getNumberOfComputedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
 
         // NOTE: Commented out because it causes a stack overflow after a couple of iterations
         //QCoreApplication::processEvents();
@@ -1547,7 +1552,7 @@ void DualAnalysisPlugin::startAlignmentComputation(mv::Dataset<Points>& inputDat
 
     const auto numEnabledDimensions = count_if(enabledDimensions.begin(), enabledDimensions.end(), [](bool b) { return b; });
 
-    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().reset();
+    tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().reset();
 
     const auto numPoints = inputDataset->isFull() ? inputDataset->getNumPoints() : inputDataset->indices.size();
     data.resize(numPoints * numEnabledDimensions);
@@ -1566,7 +1571,7 @@ void DualAnalysisPlugin::startAlignmentComputation(mv::Dataset<Points>& inputDat
         // Update the output points dataset with new data from the TSNE analysis
         embeddingDataset->setData(tsneData.getData().data(), tsneData.getNumPoints(), tsneSettingsAction->getGeneralTsneSettingsAction().getNumDimensionOutputAction().getCurrentText().toInt());
 
-        tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
+        tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().setValue(tsneAnalysis.getNumIterations() - 1);
 
         // Notify others that the embedding data changed
         events().notifyDatasetDataChanged(embeddingDataset);
@@ -1617,7 +1622,7 @@ void DualAnalysisPlugin::startAlignmentComputation(mv::Dataset<Points>& inputDat
 
     //const auto numEnabledDimensions = count_if(enabledDimensions.begin(), enabledDimensions.end(), [](bool b) { return b; });
 
-    //tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputatedIterationsAction().reset();
+    //tsneSettingsAction->getGeneralTsneSettingsAction().getNumberOfComputedIterationsAction().reset();
 
     //const auto numPoints = inputDataset->isFull() ? inputDataset->getNumPoints() : inputDataset->indices.size();
     //data.resize(numPoints * numEnabledDimensions);
@@ -1791,8 +1796,13 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
         }
 
         _selectionHelperData = mv::data().getDataset(variantMap["selectionHelperDataGUID B"].toString());
-        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Recompute");
-        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Recomputing does not change the selection mapping.\n If the data size changed, prefer creating a new HSNE analysis.");
+       /* _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Recompute");
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Recomputing does not change the selection mapping.\n If the data size changed, prefer creating a new HSNE analysis.");*/
+        
+        // TODO: fix recompute, see issues 140 and 152 on github.com/ManiVaultStudio/t-SNE-Analysis
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setEnabled(false);
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setText("Already computed"); // after fix: "Recompute"
+        _hsneSettingsAction->getGeneralHsneSettingsAction().getStartAction().setToolTip("Compute another HSNE embedding via.\nRight-click the source data -> Analyze -> HSNE");
     }
 
     _embedding2DDatasetB->_infoAction->collapse();

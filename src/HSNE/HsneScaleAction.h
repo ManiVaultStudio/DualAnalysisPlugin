@@ -71,7 +71,7 @@ public: // Action getters
 
     TriggerAction& getRefineAction() { return _refineAction; }
     TsneComputationAction& getComputationAction() { return _computationAction; }
-    IntegralAction& getNumberOfComputatedIterationsAction() { return _computationAction.getNumberOfComputatedIterationsAction(); };
+    IntegralAction& getNumberOfComputedIterationsAction() { return _computationAction.getNumberOfComputedIterationsAction(); };
 
 
 
