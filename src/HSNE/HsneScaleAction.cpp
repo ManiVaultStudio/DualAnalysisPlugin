@@ -146,7 +146,7 @@ void HsneScaleAction::initLayoutAndConnection()
 
             connect(&_tsneAnalysis, &TsneAnalysis::embeddingUpdate, this, [this](const TsneData& tsneData) {
                 _embedding->setData(tsneData.getData().data(), tsneData.getNumPoints(), 2);
-                getNumberOfComputatedIterationsAction().setValue(_tsneAnalysis.getNumIterations() - 1);
+                getNumberOfComputedIterationsAction().setValue(_tsneAnalysis.getNumIterations() - 1);
                 events().notifyDatasetDataChanged(_embedding);
                 });
         };
@@ -397,7 +397,7 @@ void HsneScaleAction::refine()
         // Update the refine embedding with new data
         refineEmbedding->setData(tsneData.getData().data(), tsneData.getNumPoints(), 2);
 
-        _refinedScaledActions.back()->getNumberOfComputatedIterationsAction().setValue(_tsneAnalysis.getNumIterations() - 1);
+        _refinedScaledActions.back()->getNumberOfComputedIterationsAction().setValue(_tsneAnalysis.getNumIterations() - 1);
 
         // Notify others that the embedding points have changed
         events().notifyDatasetDataChanged(refineEmbedding);
