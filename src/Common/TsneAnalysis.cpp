@@ -1,6 +1,5 @@
 #include "TsneAnalysis.h"
 
-#include "hdi/utils/glad/glad.h"
 #include "OffscreenBuffer.h"
 
 #include <cassert>
