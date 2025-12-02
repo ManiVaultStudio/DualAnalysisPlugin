@@ -88,6 +88,13 @@ void HsneScaleAction::initLayoutAndConnection()
             refine();
             });
     }
+    else {
+        // Data level scales have a refine action but cannot be refined
+        // You can check e.g. isVisible() on the refine action to figure
+        // out if your are dealing with a data level scale
+        _refineAction.setEnabled(false);
+        _refineAction.setVisible(false);
+    }
 
     _computationAction.addActions();
 
