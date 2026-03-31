@@ -1005,12 +1005,12 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
     // FIXME: is the indexing here correct when hsne scales > 2? 
     // get the transposed matrix of the drilled in source matrix
     auto refinedSourceDatasetB = refineEmbedding->getSourceDataset<Points>();
-    const auto refinednumPoints = refinedSourceDatasetB->getNumPoints();
-    const auto refinednumDimensions = refinedSourceDatasetB->getNumDimensions();
+    const int64_t refinednumPoints = refinedSourceDatasetB->getNumPoints();
+    const int64_t refinednumDimensions = refinedSourceDatasetB->getNumDimensions();
     QVector<float> transposedData(refinednumPoints * refinednumDimensions);
-    for (int i = 0; i < refinednumPoints; ++i)
+    for (int64_t i = 0; i < refinednumPoints; ++i)
     {
-        for (int j = 0; j < refinednumDimensions; ++j)
+        for (int64_t j = 0; j < refinednumDimensions; ++j)
         {
             // Correct indexing for the transposed data
             transposedData[j * refinednumPoints + i] = refinedSourceDatasetB->getValueAt(i * refinednumDimensions + j);
@@ -1261,10 +1261,10 @@ void DualAnalysisPlugin::onAlignmentTriggered()
     qDebug() << "embeddingSourceDatasetA: " << embeddingSourceDatasetA->getGuiName() << " embeddingSourceDatasetB: " << embeddingSourceDatasetB->getGuiName();
     qDebug() << "embedding2DDataset->getSourceDataset->getSourceDataset" << _embedding2DDatasetA->getSourceDataset<Points>()->getSourceDataset<Points>()->getGuiName();
 
-    int numDimensions = embeddingSourceDatasetA->getNumPoints();
-    int numDimensionsFull = embeddingSourceDatasetB->getNumDimensions();
-    int numPoints = embeddingSourceDatasetB->getSourceDataset<Points>()->getNumPoints();
-    int numPointsLocal = _embedding2DDatasetB->getNumPoints(); // num of points in the embedding B
+    const int64_t numDimensions = embeddingSourceDatasetA->getNumPoints();
+    const int64_t numDimensionsFull = embeddingSourceDatasetB->getNumDimensions();
+    const int64_t numPoints = embeddingSourceDatasetB->getSourceDataset<Points>()->getNumPoints();
+    const int64_t numPointsLocal = _embedding2DDatasetB->getNumPoints(); // num of points in the embedding B
     qDebug() << "numDimensions: " << numDimensions << " numDimensionsFull: " << numDimensionsFull << " numPoints: " << numPoints;
     qDebug() << "numPointsLocal: " << numPointsLocal << "numPoints source of sourceB " << embeddingSourceDatasetB->getSourceDataset<Points>()->getNumPoints();
 
@@ -1278,13 +1278,13 @@ void DualAnalysisPlugin::onAlignmentTriggered()
     std::vector<float> columnRanges(numDimensions, 0.0f);
 
 #pragma omp parallel for
-    for (int dimLocalIdx = 0; dimLocalIdx < numDimensions; dimLocalIdx++) {
-        int dimGlobalIdx = static_cast<int>(localGlobalIndicesA[dimLocalIdx]);
+    for (int64_t dimLocalIdx = 0; dimLocalIdx < numDimensions; dimLocalIdx++) {
+        int64_t dimGlobalIdx = static_cast<int>(localGlobalIndicesA[dimLocalIdx]);
 
         float minValue = std::numeric_limits<float>::max();
         float maxValue = -std::numeric_limits<float>::max();
 
-        for (int i = 0; i < numPoints; i++) {
+        for (int64_t i = 0; i < numPoints; i++) {
             float val = embeddingSourceDatasetB->getValueAt(i * numDimensionsFull + dimGlobalIdx);
             if (val < minValue) minValue = val;
             if (val > maxValue) maxValue = val;
@@ -1307,13 +1307,13 @@ void DualAnalysisPlugin::onAlignmentTriggered()
     embeddingSourceDatasetB->getGlobalIndices(localGlobalIndicesB);
 
 #pragma omp parallel for
-    for (int dimLocalIdx = 0; dimLocalIdx < numDimensions; dimLocalIdx++) {
-        float threshold = columnMins[dimLocalIdx] + 0.9f * columnRanges[dimLocalIdx];
-        int dimGlobalIdx = static_cast<int>(localGlobalIndicesA[dimLocalIdx]);
+    for (int64_t dimLocalIdx = 0; dimLocalIdx < numDimensions; dimLocalIdx++) {
+        int64_t threshold = columnMins[dimLocalIdx] + 0.9f * columnRanges[dimLocalIdx];
+        int64_t dimGlobalIdx = static_cast<int64_t>(localGlobalIndicesA[dimLocalIdx]);
 
         // Each thread deals with a different dimension => no concurrency on the same _connectionsAB index
-        for (int cellLocalIndex = 0; cellLocalIndex < numPoints; cellLocalIndex++) {
-            int cellGlobalIndex = static_cast<int>(localGlobalIndicesB[cellLocalIndex]);
+        for (int64_t cellLocalIndex = 0; cellLocalIndex < numPoints; cellLocalIndex++) {
+            int64_t cellGlobalIndex = static_cast<int>(localGlobalIndicesB[cellLocalIndex]);
             float expression = embeddingSourceDatasetB->getValueAt(cellGlobalIndex * numDimensionsFull + dimGlobalIdx);
 
             if (expression > threshold) 
