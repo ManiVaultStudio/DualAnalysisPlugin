@@ -358,9 +358,9 @@ void DualAnalysisPlugin::setup2DTsneForDataset(mv::Dataset<Points>& inputDataset
 
     auto changeSettingsReadOnly = [this, &tsneSettingsAction](bool readonly) -> void {
         tsneSettingsAction->getGeneralTsneSettingsAction().setReadOnly(readonly);
-        //tsneSettingsAction->getInitalEmbeddingSettingsAction().setReadOnly(readonly);
-        //tsneSettingsAction->getGradientDescentSettingsAction().setReadOnly(readonly);
-        //tsneSettingsAction->getKnnSettingsAction().setReadOnly(readonly);
+        tsneSettingsAction->getInitalEmbeddingSettingsAction().setReadOnly(readonly);
+        tsneSettingsAction->getGradientDescentSettingsAction().setReadOnly(readonly);
+        tsneSettingsAction->getKnnSettingsAction().setReadOnly(readonly);
         };
 
     connect(&tsneAnalysis, &TsneAnalysis::finished, this, [this, &computationAction, changeSettingsReadOnly]() {
