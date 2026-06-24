@@ -335,13 +335,13 @@ void DualAnalysisPlugin::setup2DTsneForDataset(mv::Dataset<Points>& inputDataset
 
     embeddingDataset->addAction(tsneSettingsAction->getGeneralTsneSettingsAction());
     embeddingDataset->addAction(tsneSettingsAction->getInitalEmbeddingSettingsAction());
-    //embeddingDataset->addAction(tsneSettingsAction->getGradientDescentSettingsAction());
-    //embeddingDataset->addAction(tsneSettingsAction->getKnnSettingsAction());
-    //auto dimensionsGroupAction = new GroupAction(this, "Dimensions", true);
-    //dimensionsGroupAction->addAction(&inputDataset->getFullDataset<Points>()->getDimensionsPickerAction());
-    //dimensionsGroupAction->setText(QString("Input dimensions (%1)").arg(inputDataset->getFullDataset<Points>()->text()));
-    //dimensionsGroupAction->setShowLabels(false);
-    //embeddingDataset->addAction(*dimensionsGroupAction);
+    embeddingDataset->addAction(tsneSettingsAction->getGradientDescentSettingsAction());
+    embeddingDataset->addAction(tsneSettingsAction->getKnnSettingsAction());
+    auto dimensionsGroupAction = new GroupAction(this, "Dimensions", true);
+    dimensionsGroupAction->addAction(&inputDataset->getFullDataset<Points>()->getDimensionsPickerAction());
+    dimensionsGroupAction->setText(QString("Input dimensions (%1)").arg(inputDataset->getFullDataset<Points>()->text()));
+    dimensionsGroupAction->setShowLabels(false);
+    embeddingDataset->addAction(*dimensionsGroupAction);
 
     // update settings that depend on number of data points
     tsneSettingsAction->getGradientDescentSettingsAction().getExaggerationFactorAction().setValue(4.f + inputDataset->getNumPoints() / 60000.0f);
