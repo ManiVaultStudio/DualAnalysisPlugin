@@ -129,7 +129,7 @@ void DualAnalysisPlugin::transposeData()
     QVector<float> transposedData(numPoints * numDimensions);//float
     //QVector<biovault::bfloat16_t> transposedData(numPoints * numDimensions);//bfloat
 
-    qDebug() << "transposedData vector initialized";
+    //qDebug() << "transposedData vector initialized";
 
     // Transposing the data
 #pragma omp parallel for
@@ -150,7 +150,7 @@ void DualAnalysisPlugin::transposeData()
         }
 
     }
-    qDebug() << "transposed vector generated";
+    //qDebug() << "transposed vector generated";
 
     _datasetA = mv::data().createDataset<Points>("Points", "Transposed Data");
 
@@ -977,14 +977,14 @@ void DualAnalysisPlugin::continueComputation(mv::Dataset<Points>& embeddingDatas
  ******************************************************************************/
 void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
 {
-    qDebug() << "<<<<<<<<DualAnalysisPlugin::onRefineFinished";
+    //qDebug() << "<<<<<<<<DualAnalysisPlugin::onRefineFinished";
 
     if (!refineEmbedding.isValid()) {
         qWarning() << "DualAnalysisPlugin::onRefineFinished: invalid dataset";
         return;
     }
 
-    qDebug() << "Refine Embedding Dataset:" << refineEmbedding->getGuiName();
+    //qDebug() << "Refine Embedding Dataset:" << refineEmbedding->getGuiName();
 
     // count the number of recomputed embeddings
     _numRecomputedEmbeddings++;
@@ -1023,7 +1023,7 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
     refinedDatasetA->setData(transposedData.data(), refinednumDimensions, refinednumPoints);
     events().notifyDatasetAdded(refinedDatasetA);
     events().notifyDatasetDataChanged(refinedDatasetA);
-    qDebug() << "Refined Transposed Dataset A " << _numRecomputedEmbeddings << "created " << _refinedDatasetsA.back()->getNumPoints() << " points " << _refinedDatasetsA.back()->getNumDimensions() << " dimensions";
+    //qDebug() << "Refined Transposed Dataset A " << _numRecomputedEmbeddings << "created " << _refinedDatasetsA.back()->getNumPoints() << " points " << _refinedDatasetsA.back()->getNumDimensions() << " dimensions";
 
     // add a new dataset for the corresponding 1D embedding of the refined 2D embedding B
     QString dataset1DName = "1D Embedding " + refineEmbedding->getGuiName();
@@ -1036,8 +1036,7 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
     embedding1DRefined->setData(initialData1DRefine.data(), refineEmbedding->getNumPoints(), 1);
     events().notifyDatasetAdded(embedding1DRefined);
     events().notifyDatasetDataChanged(embedding1DRefined);
-    qDebug() << "onRefineFinished(): 1D Embedding for refined B created " << embedding1DRefined->getGuiName();
-
+    //qDebug() << "onRefineFinished(): 1D Embedding for refined B created " << embedding1DRefined->getGuiName();
 
     TsneAnalysis* tsneAnalysis1D = new TsneAnalysis();
 
@@ -1066,7 +1065,7 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
         });
 
     // Prepare data for computation
-    qDebug() << "Prepare to compute 1D tsne for the refined embedding B";
+    //qDebug() << "Prepare to compute 1D tsne for the refined embedding B";
     std::vector<float> data;
     std::vector<unsigned int> indices;
 
@@ -1081,7 +1080,7 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
             indices.push_back(i);
 
     refineEmbedding->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(data, indices);
-    qDebug() << "1D tSNE data prepared for 1D refined B";
+    //qDebug() << "1D tSNE data prepared for 1D refined B";
 
     // Initialize embedding (1D)
     //auto initEmbedding1D = tsneSettingsAction1D->getInitalEmbeddingSettingsAction().getInitEmbedding(numPoints);
@@ -1104,10 +1103,10 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
 
 void DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()
 {
-    qDebug() << "DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()";
+    //qDebug() << "DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()";
 
     auto& refinedDatasetA = _refinedDatasetsA.back();
-    qDebug() << "compute2DEmbeddingAWhenDrillInB(): Refined Dataset A: " << refinedDatasetA->getGuiName();
+    //qDebug() << "compute2DEmbeddingAWhenDrillInB(): Refined Dataset A: " << refinedDatasetA->getGuiName();
 
     // add a new dataset for the recomputed 2D embedding A
     _recomputedEmbedding2DDatasetsA.push_back(mv::data().createDerivedDataset<Points>(QString("Recomputed 2D Embedding A %1").arg(_numRecomputedEmbeddings), _refinedDatasetsA.back(), _refinedDatasetsA.back()));
@@ -1115,7 +1114,7 @@ void DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()
     recomputed2DEmbeddingA->setData(_embedding2DA.getContainer().data(), _datasetA->getNumPoints(), 2); // start with the previous 2D embedding A
     events().notifyDatasetAdded(recomputed2DEmbeddingA);
     events().notifyDatasetDataChanged(recomputed2DEmbeddingA);
-    qDebug() << "Recomputed 2D Embedding A " << _numRecomputedEmbeddings << "created";
+    //qDebug() << "Recomputed 2D Embedding A " << _numRecomputedEmbeddings << "created";
 
     TsneAnalysis* tsneAnalysis = new TsneAnalysis();
 
@@ -1158,7 +1157,7 @@ void DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()
     // Init embedding: random or set from other dataset, e.g. PCA
     auto initEmbedding = tsneSettingsAction->getInitalEmbeddingSettingsAction().getInitEmbedding(numPoints); // random initialization
 
-    qDebug() << "Start 2D tSNE for the recomputed 2D embedding A";
+    //qDebug() << "Start 2D tSNE for the recomputed 2D embedding A";
 
     // recomputed 2D embedding A
     tsneAnalysis->startComputation(
@@ -1171,10 +1170,10 @@ void DualAnalysisPlugin::compute2DEmbeddingAWhenDrillInB()
 
 void DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()
 {
-    qDebug() << "DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()";
+    //qDebug() << "DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()";
 
     auto& recomputed2DEmbeddingA = _recomputedEmbedding2DDatasetsA.back();
-    qDebug() << "compute1DEmbeddingAWhenDrillInB(): Recomputed 2D Embedding A: " << recomputed2DEmbeddingA->getGuiName();
+    //qDebug() << "compute1DEmbeddingAWhenDrillInB(): Recomputed 2D Embedding A: " << recomputed2DEmbeddingA->getGuiName();
 
     // add a new dataset for the recomputed 1D embedding A
     _recomputedEmbedding1DDatasetsA.push_back(mv::data().createDerivedDataset<Points>(QString("Recomputed 1D Embedding A %1").arg(_numRecomputedEmbeddings), recomputed2DEmbeddingA, recomputed2DEmbeddingA));
@@ -1186,7 +1185,7 @@ void DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()
     recomputed1DEmbeddingA->setData(initialData1DRecomputed.data(), recomputed2DEmbeddingA->getNumPoints(), 1);
     events().notifyDatasetAdded(recomputed1DEmbeddingA);
     events().notifyDatasetDataChanged(recomputed1DEmbeddingA);
-    qDebug() << "Recomputed 1D Embedding A " << _numRecomputedEmbeddings << "created";
+    //qDebug() << "Recomputed 1D Embedding A " << _numRecomputedEmbeddings << "created";
 
     TsneAnalysis* tsneAnalysis1D = new TsneAnalysis();
     //TsneSettingsAction* tsneSettingsAction1D = new TsneSettingsAction(this, recomputed2DEmbeddingA->getNumPoints());
@@ -1225,7 +1224,7 @@ void DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()
             indices.push_back(i);
 
     recomputed2DEmbeddingA->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(data, indices);
-    qDebug() << "1D tSNE data prepared for 1D recomputedA: numPoints=" << numPoints << " numEnabledDimensions=" << numEnabledDimensions;
+    //qDebug() << "1D tSNE data prepared for 1D recomputedA: numPoints=" << numPoints << " numEnabledDimensions=" << numEnabledDimensions;
 
     // Initialize embedding (1D)
     //auto initEmbedding1D = tsneSettingsAction1D->getInitalEmbeddingSettingsAction().getInitEmbedding(numPoints);
@@ -1234,7 +1233,7 @@ void DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()
 
     // master embedding
     auto masterEmbedding = convertDatasetToEmbedding(recomputed2DEmbeddingA, 2);
-    qDebug() << "Master embedding created for 1D recomputedA " << masterEmbedding.numDataPoints() << " points " << masterEmbedding.numDimensions() << " dimensions";
+    //qDebug() << "Master embedding created for 1D recomputedA " << masterEmbedding.numDataPoints() << " points " << masterEmbedding.numDimensions() << " dimensions";
 
     tsneAnalysis1D->startComputation(
         tsneSettingsAction1D->getTsneParameters(),
@@ -1665,9 +1664,6 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
 
     AnalysisPlugin::fromVariantMap(variantMap);
 
-    /*_settingsAction.fromParentVariantMap(variantMap);
-    qDebug() << "DualAnalysisPlugin::fromVariantMap: settingsAction";*/
-
     /*--------------------------------------------------------------
       datasets
     *--------------------------------------------------------------*/
@@ -1737,8 +1733,6 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
         {
             if (variantMap.contains("probabilityDistribution B"))
             {
-                //qDebug() << "DualAnalysisPlugin::fromVariantMap variantMap.contains probabilityDistribution B";
-                
                 // Load HSNE Hierarchy
                 const auto loadPathHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["probabilityDistribution B"].toString());
 
@@ -1777,7 +1771,6 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
 
         if (_hsneSettingsAction->getHierarchyConstructionSettingsAction().getSaveHierarchyToProjectAction().isChecked())
         {
-            //qDebug() << "DualAnalysisPlugin::fromVariantMap save hierarchy to project is checked B ";
 
             if (variantMap.contains("HsneHierarchy B") && variantMap.contains("HsneInfluenceHierarchy B"))
             {
@@ -1834,7 +1827,6 @@ QVariantMap DualAnalysisPlugin::toVariantMap() const
     variantMap.insert("embedding2DDatasetBGuid", _embedding2DDatasetB.getDatasetId());
     variantMap.insert("embedding1DDatasetBGuid", _embedding1DDatasetB.getDatasetId());
 
-    
     /*--------------------------------------------------------------
       embedding A settings
     *--------------------------------------------------------------*/
@@ -1924,7 +1916,6 @@ QVariantMap DualAnalysisPlugin::toVariantMap() const
         variantMap["selectionHelperDataGUID B"] = QVariant::fromValue(_selectionHelperData->getId());
 	}
 
-
     return variantMap;
 }
 
@@ -1971,4 +1962,3 @@ PluginTriggerActions DualAnalysisPluginFactory::getPluginTriggerActions(const mv
 
     return pluginTriggerActions;
 }
-
