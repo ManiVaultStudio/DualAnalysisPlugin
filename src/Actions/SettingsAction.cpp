@@ -15,7 +15,7 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     addAction(&_embeddingAlgorithmAction);
 
     _alignmentAction.setToolTip("Align the four embeddings");
-    addAction(&_alignmentAction);
+    //addAction(&_alignmentAction);
 
 }
 

@@ -317,10 +317,11 @@ void DualAnalysisPlugin::initializeEmbeddingB()
 		compute1DTsne(_embedding2DDatasetB, _embedding1DDatasetB, _1DtsneAnalysisB, _1DtsneSettingsActionB, _1DdataPreparationTaskB, _embedding2DB);
 		});
 
-	connect(&_settingsAction.getAlignmentAction(), &TriggerAction::triggered, this, [this]() {
+    // FIXME: Disable alignment action for now, implementation not fully works
+	//connect(&_settingsAction.getAlignmentAction(), &TriggerAction::triggered, this, [this]() {
 
-		onAlignmentTriggered();
-		});
+	//	onAlignmentTriggered();
+	//	});
 }
 
 /******************************************************************************
@@ -1248,6 +1249,8 @@ void DualAnalysisPlugin::compute1DEmbeddingAWhenDrillInB()
 
 void DualAnalysisPlugin::onAlignmentTriggered()
 {
+    // FIXME: alignment action is not added for now, finish implement later if needed
+
     qDebug() << "DualAnalysisPlugin::onAlignmentTriggered";
 
     // compute connections between 1D embeddings - connectionsAB 
@@ -1437,6 +1440,8 @@ void DualAnalysisPlugin::onAlignmentTriggered()
 
 void DualAnalysisPlugin::align2DAto1DA()
 {
+    // FIXME: alignment action is not added for now, finish implement later if needed
+    
     // test use new tsne analysis instance 2DA to 1DA
 	qDebug() << "DualAnalysisPlugin::align2DAto1DA()";
 
@@ -1536,6 +1541,8 @@ void DualAnalysisPlugin::align2DAto1DA()
 void DualAnalysisPlugin::startAlignmentComputation(mv::Dataset<Points>& inputDataset, mv::Dataset<Points>& embeddingDataset, TsneAnalysis& tsneAnalysis, TsneSettingsAction*& tsneSettingsAction, mv::Task& dataPreparationTask,
     hdi::data::Embedding<float>& masterEmbedding)
 {
+    // FIXME: alignment action is not added for now, finish implement later if needed
+
     embeddingDataset->getTask().setRunning();
 
     dataPreparationTask.setEnabled(true);
