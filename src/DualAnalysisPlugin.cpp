@@ -1002,8 +1002,6 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
         return;
     }
 
-    // FIXME: is the indexing here correct when hsne scales > 2? - the transposed data for embedding A
-    // // Check method: transpose the transposed data again and compare
     // get the transposed matrix of the drilled in source matrix
     auto refinedSourceDatasetB = refineEmbedding->getSourceDataset<Points>();
     const int64_t refinednumPoints = refinedSourceDatasetB->getNumPoints();
