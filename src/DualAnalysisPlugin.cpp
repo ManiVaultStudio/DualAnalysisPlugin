@@ -1002,7 +1002,8 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
         return;
     }
 
-    // FIXME: is the indexing here correct when hsne scales > 2? 
+    // FIXME: is the indexing here correct when hsne scales > 2? - the transposed data for embedding A
+    // // Check method: transpose the transposed data again and compare
     // get the transposed matrix of the drilled in source matrix
     auto refinedSourceDatasetB = refineEmbedding->getSourceDataset<Points>();
     const int64_t refinednumPoints = refinedSourceDatasetB->getNumPoints();
@@ -1070,24 +1071,23 @@ void DualAnalysisPlugin::onRefineFinished(mv::Dataset<Points> refineEmbedding)
     std::vector<float> data;
     std::vector<unsigned int> indices;
 
-    auto& refinedDataset = refineEmbedding; // TODO: remove this, just use refineEmbedding
-    std::vector<bool> enabledDimensions = refinedDataset->getDimensionsPickerAction().getEnabledDimensions();
+    std::vector<bool> enabledDimensions = refineEmbedding->getDimensionsPickerAction().getEnabledDimensions();
     const auto numEnabledDimensions = std::count(enabledDimensions.begin(), enabledDimensions.end(), true);
 
-    const auto numPoints = refinedDataset->isFull() ? refinedDataset->getNumPoints() : refinedDataset->indices.size();
+    const auto numPoints = refineEmbedding->isFull() ? refineEmbedding->getNumPoints() : refineEmbedding->indices.size();
     data.resize(numPoints * numEnabledDimensions);
 
-    for (int i = 0; i < refinedDataset->getNumDimensions(); i++)
+    for (int i = 0; i < refineEmbedding->getNumDimensions(); i++)
         if (enabledDimensions[i])
             indices.push_back(i);
 
-    refinedDataset->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(data, indices);
+    refineEmbedding->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(data, indices);
     qDebug() << "1D tSNE data prepared for 1D refined B";
 
     // Initialize embedding (1D)
     //auto initEmbedding1D = tsneSettingsAction1D->getInitalEmbeddingSettingsAction().getInitEmbedding(numPoints);
-    std::vector<float> initEmbedding1D(refinedDataset->getNumPoints());
-    refinedDataset->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(initEmbedding1D, { 1 });
+    std::vector<float> initEmbedding1D(refineEmbedding->getNumPoints());
+    refineEmbedding->populateDataForDimensions<std::vector<float>, std::vector<unsigned int>>(initEmbedding1D, { 1 });
 
     // generate master embedding
     auto embedding2DB = convertDatasetToEmbedding(refineEmbedding, 2);
