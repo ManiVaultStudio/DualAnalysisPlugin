@@ -1,5 +1,7 @@
 #include "HsneSettingsAction.h"
 
+#include <util/Serialization.h>
+
 #include "../DualAnalysisPlugin.h"
 
 using namespace mv::gui;

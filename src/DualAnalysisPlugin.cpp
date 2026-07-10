@@ -12,6 +12,7 @@
 
 #include <event/Event.h>
 #include <util/Icon.h>
+#include <util/Serialization.h>
 
 #include <actions/PluginTriggerAction.h>
 
@@ -1776,12 +1777,57 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
             {
                 hdi::utils::CoutLog log;
 
+                QTemporaryDir tempDir;
+
                 // Load HSNE Hierarchy
-                const auto loadPathHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy B"].toString());
-                bool loadedHierarchy = _hierarchy->loadCacheHsneHierarchy(loadPathHierarchy.toStdString(), log);
+                /*const auto loadPathHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy B"].toString());
+                bool loadedHierarchy = _hierarchy->loadCacheHsneHierarchy(loadPathHierarchy.toStdString(), log);*/
+
+                auto loadPathHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy"].toString());
+
+                if (variantMap.contains("HsneHierarchyRaw") && variantMap["HsneHierarchyRaw"].canConvert<QVariantMap>()) {
+                    const auto hsneHierarchyRawMap = variantMap["HsneHierarchyRaw"].toMap();
+                    const auto restored = bytesFromBlobVariantMap(hsneHierarchyRawMap);
+
+                    QFile file(loadPathHierarchy);
+
+                    if (!file.open(QIODevice::WriteOnly))
+                        throw std::runtime_error("Failed to open output file");
+
+                    if (file.write(restored) != restored.size())
+                        throw std::runtime_error("Failed to write output file");
+
+                    file.close();
+                }
+                else {
+                    loadPathHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneHierarchy"].toString());
+                }
+
+                const auto loadedHierarchy = _hierarchy->loadCacheHsneHierarchy(loadPathHierarchy.toStdString(), log);
 
                 // Load HSNE InfluenceHierarchy
-                const auto loadPathInfluenceHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy B"].toString());
+                /*const auto loadPathInfluenceHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy B"].toString());*/
+                
+                auto loadPathInfluenceHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy"].toString());
+
+                if (variantMap.contains("HsneInfluenceHierarchyRaw") && variantMap["HsneInfluenceHierarchyRaw"].canConvert<QVariantMap>()) {
+                    const auto hsneInfluenceHierarchyRawMap = variantMap["HsneInfluenceHierarchyRaw"].toMap();
+                    const auto restored = bytesFromBlobVariantMap(hsneInfluenceHierarchyRawMap);
+
+                    QFile file(loadPathInfluenceHierarchy);
+
+                    if (!file.open(QIODevice::WriteOnly))
+                        throw std::runtime_error("Failed to open output file");
+
+                    if (file.write(restored) != restored.size())
+                        throw std::runtime_error("Failed to write output file");
+
+                    file.close();
+                }
+                else {
+                    loadPathInfluenceHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneInfluenceHierarchy"].toString());
+                }
+                
                 bool loadedInfluenceHierarchy = _hierarchy->loadCacheHsneInfluenceHierarchy(loadPathInfluenceHierarchy.toStdString(), _hierarchy->getInfluenceHierarchy().getMap());
 
                 _hierarchy->setIsInitialized(true);
@@ -1890,6 +1936,10 @@ QVariantMap DualAnalysisPlugin::toVariantMap() const
             {
                 const auto fileName = QUuid::createUuid().toString(QUuid::WithoutBraces) + ".bin";
                 const auto filePath = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Save) + QDir::separator() + fileName).toStdString();
+                const auto cleanup = qScopeGuard([&] {
+                    if (!QFile::remove(QString::fromStdString(filePath)))
+                        qWarning() << "Failed to remove temporary file:" << filePath;
+                    });
 
                 std::ofstream saveFile(filePath, std::ios::out | std::ios::binary);
 
@@ -1901,15 +1951,37 @@ QVariantMap DualAnalysisPlugin::toVariantMap() const
                     saveFile.close();
                     variantMap["HsneHierarchy B"] = fileName;
                 }
+
+                QFile file(QString::fromStdString(filePath));
+
+                if (!file.open(QIODevice::ReadOnly))
+                    throw std::runtime_error("Failed to open input file");
+
+                const auto bytes = file.readAll();
+
+                variantMap["HsneHierarchyRaw"] = bytesToBlobVariantMap(bytes.constData(), static_cast<std::uint64_t>(bytes.size()));
             }
 
             // Handle HSNE InfluenceHierarchy
             {
                 const auto fileName = QUuid::createUuid().toString(QUuid::WithoutBraces) + ".bin";
                 const auto filePath = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Save) + QDir::separator() + fileName).toStdString();
+                const auto cleanup = qScopeGuard([&] {
+                    if (!QFile::remove(QString::fromStdString(filePath)))
+                        qWarning() << "Failed to remove temporary file:" << filePath;
+                    });
 
                 _hierarchy->saveCacheHsneInfluenceHierarchy(filePath, _hierarchy->getInfluenceHierarchy().getMap());
                 variantMap["HsneInfluenceHierarchy B"] = fileName;
+
+                QFile file(QString::fromStdString(filePath));
+
+                if (!file.open(QIODevice::ReadOnly))
+                    throw std::runtime_error("Failed to open input file");
+
+                const auto bytes = file.readAll();
+
+                variantMap["HsneInfluenceHierarchyRaw"] = bytesToBlobVariantMap(bytes.constData(), static_cast<std::uint64_t>(bytes.size()));
             }
         }
 

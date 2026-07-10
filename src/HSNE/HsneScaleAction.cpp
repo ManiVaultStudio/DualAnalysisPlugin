@@ -1,5 +1,7 @@
 #include "HsneScaleAction.h"
 
+#include <util/Serialization.h>
+
 #include "../DualAnalysisPlugin.h"
 
 #include "DataHierarchyItem.h"
@@ -21,6 +23,7 @@
 
 using namespace mv;
 using namespace mv::gui;
+using namespace mv::util;
 
 
 HsneScaleAction::HsneScaleAction(QObject* parent, DualAnalysisPlugin* plugin, HsneHierarchy& hsneHierarchy, Dataset<Points> inputDataset, Dataset<Points> embeddingDataset) :
@@ -445,7 +448,11 @@ void HsneScaleAction::fromVariantMap(const QVariantMap& variantMap)
         const auto drillIndices = variantMap["drillIndices"].toMap();
         std::vector<uint32_t> drillIndicesVec;
         drillIndicesVec.resize(static_cast<size_t>(variantMap["drillIndicesSize"].toInt()));
-        populateDataBufferFromVariantMap(drillIndices, (char*)drillIndicesVec.data());
+        /*populateDataBufferFromVariantMap(drillIndices, (char*)drillIndicesVec.data());*/
+
+        if (!drillIndicesVec.empty())
+            populateBytesFromBlobMap(drillIndices, (char*)drillIndicesVec.data(), drillIndicesVec.size() * sizeof(uint32_t));
+
         _drillIndices = std::move(drillIndicesVec);
     }
 
@@ -502,7 +509,8 @@ QVariantMap HsneScaleAction::toVariantMap() const
     variantMap["embeddingGUID"] = QVariant::fromValue(_embedding.get<Points>()->getId());
     
     // Handle own data
-    variantMap["drillIndices"]      = rawDataToVariantMap((char*)_drillIndices.data(), _drillIndices.size() * sizeof(uint32_t), true);
+    //variantMap["drillIndices"]      = rawDataToVariantMap((char*)_drillIndices.data(), _drillIndices.size() * sizeof(uint32_t), true);
+    variantMap["drillIndices"] = bytesToBlobVariantMap((char*)_drillIndices.data(), _drillIndices.size() * sizeof(uint32_t));
     variantMap["drillIndicesSize"]  = QVariant::fromValue(_drillIndices.size());
     variantMap["isTopScale"]        = QVariant::fromValue(_isTopScale);
     variantMap["currentScaleLevel"] = QVariant::fromValue(_currentScaleLevel);
