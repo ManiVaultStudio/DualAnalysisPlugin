@@ -49,7 +49,7 @@ if (MV_DUAL_USE_ARTIFACTORY_LIBS)
     if(NOT DUAL_ANALYSIS_ARTIFACTORY_LIBS_INSTALLED)
         message(STATUS "Installing artifactory packages to: ${LIBRARY_INSTALL_DIR}")
 
-        set(HDILib_VERSION 1.2.10)
+        set(HDILib_VERSION 1.2.12)
         set(flann_VERSION 1.9.2)
         set(lz4_VERSION 1.10.0)
 

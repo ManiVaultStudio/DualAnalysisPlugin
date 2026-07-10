@@ -1700,10 +1700,10 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                 _tsneSettingsActionA->getComputationAction().getContinueComputationAction().setEnabled(true);
             }
             else
-                qWarning("TsneAnalysisPlugin::fromVariantMap: t-SNE probability distribution A was NOT loaded successfully");
+                qWarning("DualAnalysisPlugin::fromVariantMap: t-SNE probability distribution A was NOT loaded successfully");
         }
         else
-            qWarning("TsneAnalysisPlugin::fromVariantMap: t-SNE probability distribution A cannot be loaded from project since the project file does not seem to contain a corresponding file.");
+            qWarning("DualAnalysisPlugin::fromVariantMap: t-SNE probability distribution A cannot be loaded from project since the project file does not seem to contain a corresponding file.");
     }
 
     _embedding2DDatasetA->_infoAction->collapse();
@@ -1746,10 +1746,10 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                     _tsneSettingsActionB->getComputationAction().getContinueComputationAction().setEnabled(true);
                 }
                 else
-                    qWarning("TsneAnalysisPlugin::fromVariantMap: t-SNE probability distribution B was NOT loaded successfully");
+                    qWarning("DualAnalysisPlugin::fromVariantMap: t-SNE probability distribution B was NOT loaded successfully");
             }
             else
-                qWarning("TsneAnalysisPlugin::fromVariantMap: t-SNE probability distribution B cannot be loaded from project since the project file does not seem to contain a corresponding file.");
+                qWarning("DualAnalysisPlugin::fromVariantMap: t-SNE probability distribution B cannot be loaded from project since the project file does not seem to contain a corresponding file.");
         }
     }
     else if (variantMap.contains("HSNE Settings B"))
@@ -1773,7 +1773,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
         if (_hsneSettingsAction->getHierarchyConstructionSettingsAction().getSaveHierarchyToProjectAction().isChecked())
         {
 
-            if (variantMap.contains("HsneHierarchy B") && variantMap.contains("HsneInfluenceHierarchy B"))
+            if (variantMap.contains("HsneHierarchy B") && variantMap.contains("HsneInfluenceHierarchyB"))
             {
                 hdi::utils::CoutLog log;
 
@@ -1783,7 +1783,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                 /*const auto loadPathHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy B"].toString());
                 bool loadedHierarchy = _hierarchy->loadCacheHsneHierarchy(loadPathHierarchy.toStdString(), log);*/
 
-                auto loadPathHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy"].toString());
+                auto loadPathHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneHierarchy B"].toString());
 
                 if (variantMap.contains("HsneHierarchyRaw") && variantMap["HsneHierarchyRaw"].canConvert<QVariantMap>()) {
                     const auto hsneHierarchyRawMap = variantMap["HsneHierarchyRaw"].toMap();
@@ -1800,7 +1800,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                     file.close();
                 }
                 else {
-                    loadPathHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneHierarchy"].toString());
+                    loadPathHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneHierarchy B"].toString());
                 }
 
                 const auto loadedHierarchy = _hierarchy->loadCacheHsneHierarchy(loadPathHierarchy.toStdString(), log);
@@ -1808,7 +1808,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                 // Load HSNE InfluenceHierarchy
                 /*const auto loadPathInfluenceHierarchy = QDir::cleanPath(projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy B"].toString());*/
                 
-                auto loadPathInfluenceHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy"].toString());
+                auto loadPathInfluenceHierarchy = QDir::cleanPath(mv::projects().getTemporaryDirPath(AbstractProjectManager::TemporaryDirType::Open) + QDir::separator() + variantMap["HsneInfluenceHierarchy B"].toString());
 
                 if (variantMap.contains("HsneInfluenceHierarchyRaw") && variantMap["HsneInfluenceHierarchyRaw"].canConvert<QVariantMap>()) {
                     const auto hsneInfluenceHierarchyRawMap = variantMap["HsneInfluenceHierarchyRaw"].toMap();
@@ -1825,7 +1825,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
                     file.close();
                 }
                 else {
-                    loadPathInfluenceHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneInfluenceHierarchy"].toString());
+                    loadPathInfluenceHierarchy = mv::projects().extractFileFromManiVaultProject(mv::projects().getCurrentProject()->getFilePath(), tempDir, variantMap["HsneInfluenceHierarchy B"].toString());
                 }
                 
                 bool loadedInfluenceHierarchy = _hierarchy->loadCacheHsneInfluenceHierarchy(loadPathInfluenceHierarchy.toStdString(), _hierarchy->getInfluenceHierarchy().getMap());
