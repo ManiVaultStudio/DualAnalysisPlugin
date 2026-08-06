@@ -1773,7 +1773,7 @@ void DualAnalysisPlugin::fromVariantMap(const QVariantMap& variantMap)
         if (_hsneSettingsAction->getHierarchyConstructionSettingsAction().getSaveHierarchyToProjectAction().isChecked())
         {
 
-            if (variantMap.contains("HsneHierarchy B") && variantMap.contains("HsneInfluenceHierarchyB"))
+            if (variantMap.contains("HsneHierarchy B") && variantMap.contains("HsneInfluenceHierarchy B"))
             {
                 hdi::utils::CoutLog log;
 
